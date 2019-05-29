@@ -1,7 +1,7 @@
 /*jshint esversion: 6,node: true,-W041: false */
 "use strict";
 
-const Wunderground = require('wundergroundnode'),
+const Wunderground = require('weather-underground-node'),
     converter = require('../util/converter'),
     moment = require('moment-timezone');
 class WundergroundAPI {
@@ -52,23 +52,23 @@ class WundergroundAPI {
         let weather = {};
         weather.forecasts = [];
 
-        this.wunderground.conditions().forecast().request(this.location, function (error, response) {
+        this.wunderground.ForecastDaily().FiveDay().ByPostalCode(this.location, 'US').Language("en-US").request(function (error, response) {
             if (!error) {
                 // Current weather report
                 var lookAt
                 try {
                     lookAt = 'current_observation'
-                    weather.report = this.parseReport(response.current_observation);
+                    // weather.report = this.parseReport(response.current_observation);
 
                     // Forecasts for today and next 3 days
                     lookAt = 'forecastday[0]'
-                    weather.forecasts.push(this.parseForecast(response.forecast.simpleforecast.forecastday[0]));
-                    lookAt = 'forecastday[1]'
-                    weather.forecasts.push(this.parseForecast(response.forecast.simpleforecast.forecastday[1]));
-                    lookAt = 'forecastday[2]'
-                    weather.forecasts.push(this.parseForecast(response.forecast.simpleforecast.forecastday[2]));
-                    lookAt = 'forecastday[3]'
-                    weather.forecasts.push(this.parseForecast(response.forecast.simpleforecast.forecastday[3]));
+                    weather.forecasts.push(this.parseForecast(response,0));
+                    // lookAt = 'forecastday[1]'
+                    // weather.forecasts.push(this.parseForecast(response));
+                    // lookAt = 'forecastday[2]'
+                    // weather.forecasts.push(this.parseForecast(response));
+                    // lookAt = 'forecastday[3]'
+                    // weather.forecasts.push(this.parseForecast(response));
                     callback(null, weather);
                 }
                 catch(error) {
@@ -113,21 +113,22 @@ class WundergroundAPI {
         return report;
     }
 
-    parseForecast(values) {
+    parseForecast(values,index) {
         let forecast = {};
+        let dayIndex = index + 1;
 
         try {
-            forecast.Condition = values.conditions;
-            forecast.ConditionCategory = converter.getConditionCategory(values.icon);
-            forecast.ForecastDay = values.date.weekday;
-            forecast.Humidity = parseInt(values.avehumidity);
-            forecast.RainChance = values.pop;
-            forecast.RainDay = isNaN(parseInt(values.qpf_allday.mm)) ? 0 : parseInt(values.qpf_allday.mm);
-            forecast.Temperature = values.high.celsius;
-            forecast.TemperatureMin = values.low.celsius;
-            forecast.WindDirection = values.avewind.dir;
-            forecast.WindSpeed = parseFloat(values.avewind.kph);
-            forecast.WindSpeedMax = parseFloat(values.maxwind.kph);
+            // forecast.Condition = values.conditions;
+            // forecast.ConditionCategory = converter.getConditionCategory(values.icon);
+            forecast.ForecastDay = values.dayOfWeek[dayIndex];
+            forecast.Humidity = values.dayPart[0].relativeHumidity[dayIndex];
+            forecast.RainChance = values.dayPart[0].precipChance[dayIndex];
+            forecast.RainDay = values.dayPart[0].qpf[dayIndex]
+            forecast.Temperature = values.temperatureMax[dayIndex];
+            forecast.TemperatureMin = values.temperatureMax[dayIndex];
+            forecast.WindDirection = values.dayPart[0].windDirectionCardinal[dayIndex];
+            forecast.WindSpeed = values.dayPart[0].windSpeed[dayIndex];
+            // forecast.WindSpeedMax = parseFloat(values.maxwind.kph);
         }
         catch(error) {
             this.log.error("Error retrieving weather forecast for Weather Underground");
