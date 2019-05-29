@@ -52,23 +52,23 @@ class WundergroundAPI {
         let weather = {};
         weather.forecasts = [];
 
-        this.wunderground.ForecastDaily().FiveDay().ByPostalCode(this.location, 'US').Language("en-US").request(function (error, response) {
+        this.wunderground.ForecastDaily().FiveDay().ByPostalCode('53531', 'US').Language("en-US").request(function (error, response) {
             if (!error) {
                 // Current weather report
                 var lookAt
                 try {
-                    lookAt = 'current_observation'
+                    // lookAt = 'current_observation'
                     // weather.report = this.parseReport(response.current_observation);
 
                     // Forecasts for today and next 3 days
                     lookAt = 'forecastday[0]'
                     weather.forecasts.push(this.parseForecast(response,0));
-                    // lookAt = 'forecastday[1]'
-                    // weather.forecasts.push(this.parseForecast(response));
-                    // lookAt = 'forecastday[2]'
-                    // weather.forecasts.push(this.parseForecast(response));
-                    // lookAt = 'forecastday[3]'
-                    // weather.forecasts.push(this.parseForecast(response));
+                    lookAt = 'forecastday[1]'
+                    weather.forecasts.push(this.parseForecast(response,1));
+                    lookAt = 'forecastday[2]'
+                    weather.forecasts.push(this.parseForecast(response,2));
+                    lookAt = 'forecastday[3]'
+                    weather.forecasts.push(this.parseForecast(response,3));
                     callback(null, weather);
                 }
                 catch(error) {
@@ -79,7 +79,7 @@ class WundergroundAPI {
             }
             else {
                 this.log.error("Error retrieving weather report and forecast for Weather Underground");
-                this.log.error("Error Message: " + error);
+                this.log.error("Error Message: " + JSON.stringify(error));
                 callback(error);
             }
         }.bind(this));
@@ -121,17 +121,17 @@ class WundergroundAPI {
             // forecast.Condition = values.conditions;
             // forecast.ConditionCategory = converter.getConditionCategory(values.icon);
             forecast.ForecastDay = values.dayOfWeek[dayIndex];
-            forecast.Humidity = values.dayPart[0].relativeHumidity[dayIndex];
-            forecast.RainChance = values.dayPart[0].precipChance[dayIndex];
-            forecast.RainDay = values.dayPart[0].qpf[dayIndex]
+            forecast.Humidity = values.daypart[0].relativeHumidity[dayIndex];
+            forecast.RainChance = values.daypart[0].precipChance[dayIndex];
+            forecast.RainDay = values.daypart[0].qpf[dayIndex]
             forecast.Temperature = values.temperatureMax[dayIndex];
             forecast.TemperatureMin = values.temperatureMax[dayIndex];
-            forecast.WindDirection = values.dayPart[0].windDirectionCardinal[dayIndex];
-            forecast.WindSpeed = values.dayPart[0].windSpeed[dayIndex];
+            forecast.WindDirection = values.daypart[0].windDirectionCardinal[dayIndex];
+            forecast.WindSpeed = values.daypart[0].windSpeed[dayIndex];
             // forecast.WindSpeedMax = parseFloat(values.maxwind.kph);
         }
         catch(error) {
-            this.log.error("Error retrieving weather forecast for Weather Underground");
+            this.log.error("Error parsing weather forecast for Weather Underground");
             this.log.error("Error Message: " + error);
         }
 
